@@ -12,6 +12,6 @@ jobs:
           java-version: '18'
           distribution: 'adopt'
       - name: Make gradlew executable
-        run: chmod +x .JavaDBstudying/PeopleDB/gradlew
+        run: chmod +x PeopleDB/gradlew
       - name: Build with Gradle
         run: ./gradlew build
