@@ -11,7 +11,7 @@
         <option name="gradleJvm" value="corretto-18 (2)" />
         <option name="modules">
           <set>
-            <option value="$PROJECT_DIR$/PeopleDB" />
+            <option value="$PROJECT_DIR$/" />
           </set>
         </option>
       </GradleProjectSettings>
