@@ -30,4 +30,4 @@ jobs:
         distribution: 'temurin'
     - name: Build with Gradle
       run: ./gradlew build --no-daemon
-      working-directory: /home/runner/work/JavaDBstudying/PeopleDB
+      working-directory: /JavaDBstudying/PeopleDB
