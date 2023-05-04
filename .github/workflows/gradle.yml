@@ -29,7 +29,7 @@ jobs:
         java-version: '11'
         distribution: 'temurin'
     - name: Grant execute permission to gradlew
-      run: chmod +x ./JavaDBstudying/PeopleDB/gradlew
+      run: chmod +x ./PeopleDB/gradlew
     - name: Build with Gradle
       run: ./gradlew build --no-daemon
       working-directory: /home/runner/work/JavaDBstudying/JavaDBstudying/PeopleDB
