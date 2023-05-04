@@ -32,5 +32,5 @@ jobs:
       run: chmod +x ./PeopleDB/gradlew
     - name: Build with Gradle
       run: ./gradlew build --no-daemon
-      working-directory: /home/runner/work/JavaDBstudying/JavaDBstudying/PeopleDB
+      
 
