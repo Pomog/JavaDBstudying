@@ -8,8 +8,10 @@ public class Person {
     private String lastName;
     private ZonedDateTime dob;
 
-
     public Person(String firstName, String lastName, ZonedDateTime dob) {
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.dob = dob;
     }
 
     public void setId(Long id) {
@@ -17,7 +19,7 @@ public class Person {
     }
 
     public Long getId() {
-        return 1L;
+        return id;
     }
 
     public String getFirstName() {

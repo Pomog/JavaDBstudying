@@ -7,12 +7,13 @@ import java.time.ZoneId;
 
 public class PeopleRepository {
     private Connection connection;
-    public PeopleRepository(Connection connection) {
 
+    public PeopleRepository(Connection connection) {
+        this.connection = connection;
     }
 
     public Person save(Person person) {
-        String sql = "INSERT INTO PEOPLE (FIRST_NAME, LAST_NAME, DOB VALUES (?, ?, ?)";
+        String sql = "INSERT INTO PEOPLE (FIRST_NAME, LAST_NAME, DOB) VALUES (?, ?, ?)";
 
         try {
             PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
