@@ -1,6 +1,10 @@
 package yp.peopledb.model;
 
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.Objects;
 
 public class Person {
     private Long id;
@@ -54,5 +58,26 @@ public class Person {
                 ", lastName='" + lastName + '\'' +
                 ", dob=" + dob +
                 '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Person person)) return false;
+        System.out.println("object: " + getDob().withZoneSameInstant(ZoneId.of("UTC")));
+        System.out.println("person: " + person.getDob().withZoneSameInstant(ZoneId.of("UTC")));
+
+        return Objects.equals(
+                getId(), person.getId()) &&
+                getFirstName().equals(person.getFirstName()) &&
+                getLastName().equals(person.getLastName()) &&
+                getDob().withZoneSameInstant(ZoneId.of("UTC")).truncatedTo(ChronoUnit.SECONDS)
+                        .equals(person.getDob().withZoneSameInstant(ZoneId.of("UTC")).truncatedTo(ChronoUnit.SECONDS));
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getId(), getFirstName(), getLastName(),
+                getDob().withZoneSameInstant(ZoneId.of("UTC")).truncatedTo(ChronoUnit.SECONDS));
     }
 }
