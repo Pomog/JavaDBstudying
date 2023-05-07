@@ -18,6 +18,13 @@ public class Person {
         this.dob = dob;
     }
 
+    public Person(Long id, String firstName, String lastName, ZonedDateTime dob) {
+        this.id = id;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.dob = dob;
+    }
+
     public void setId(Long id) {
         this.id = id;
     }

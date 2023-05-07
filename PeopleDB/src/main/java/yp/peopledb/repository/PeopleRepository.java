@@ -6,11 +6,16 @@ import yp.peopledb.repository.exeption.UnableToSaveException;
 import java.sql.*;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.Arrays;
 import java.util.Optional;
+
+import static java.util.stream.Collectors.joining;
 
 public class PeopleRepository {
     public static final String SAVE_PERSON_SQL = "INSERT INTO PEOPLE (FIRST_NAME, LAST_NAME, DOB) VALUES (?, ?, ?)";
     public static final String FIND_BY_ID_SQL = "SELECT ID, FIRST_NAME, LAST_NAME, DOB FROM PEOPLE WHERE ID=?";
+    public static final String COUNT_SQL = "SELECT COUNT(*) FROM PEOPLE";
+    public static final String DELETE_SQL = "DELETE FROM PEOPLE WHERE ID=?";
     private Connection connection;
 
     public PeopleRepository(Connection connection) {
@@ -60,6 +65,49 @@ public class PeopleRepository {
             throw new RuntimeException(e);
         }
         return Optional.ofNullable(person);
+    }
+
+    public long count() {
+        long count = 0;
+        try {
+            PreparedStatement ps = connection.prepareStatement(COUNT_SQL);
+            ResultSet rs = ps.executeQuery();
+            rs.next();
+            count = rs.getLong(1);
+            rs.close();
+            ps.close();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        return count;
+    }
+
+    public void delete(Person person) {
+        try {
+            PreparedStatement ps = connection.prepareStatement(DELETE_SQL);
+            ps.setLong(1, person.getId());
+            int affectedRecordCount = ps.executeUpdate();
+            System.out.println("affectedRecordCount on delete: " + affectedRecordCount);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void delete(Person...people) {
+//        for (Person person : people){
+//            delete(person);
+//        }
+        try {
+            Statement stmt = connection.createStatement();
+            String ids = Arrays.stream(people).
+                    map(Person::getId).
+                    map(String::valueOf).
+                    collect(joining(","));
+            int affectedRecordsCount = stmt.executeUpdate("DELETE FROM PEOPLE WHERE ID IN (:ids)".replace(":ids", ids));
+            System.out.println("affectedRecordsCount on multy delete: " + affectedRecordsCount);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 }
 
