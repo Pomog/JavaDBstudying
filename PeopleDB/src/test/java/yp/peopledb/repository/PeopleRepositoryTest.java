@@ -11,6 +11,7 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -65,7 +66,14 @@ public class PeopleRepositoryTest {
     @Disabled("This test is failing on GitHub")
     public void canFindPersonById (){
         Person savedPerson = repo.save(new Person("test", "jackson", ZonedDateTime.now()));
-        Person foundPerson = repo.findById(savedPerson.getId());
+        Person foundPerson = repo.findById(savedPerson.getId()).get();
         assertThat(foundPerson).isEqualTo(savedPerson);
+    }
+
+    @Test
+    @Disabled("This test is failing on GitHub")
+    public void testPersonIdNotFound (){
+        Optional<Person> foundPerson = repo.findById(-1L);
+        assertThat(foundPerson).isEmpty();
     }
 }
