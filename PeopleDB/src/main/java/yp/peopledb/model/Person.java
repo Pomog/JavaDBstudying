@@ -1,7 +1,7 @@
 package yp.peopledb.model;
 
+import java.math.BigDecimal;
 import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Objects;
@@ -11,6 +11,7 @@ public class Person {
     private String firstName;
     private String lastName;
     private ZonedDateTime dob;
+    private BigDecimal salary = new BigDecimal("0");
 
     public Person(String firstName, String lastName, ZonedDateTime dob) {
         this.firstName = firstName;
@@ -23,6 +24,14 @@ public class Person {
         this.firstName = firstName;
         this.lastName = lastName;
         this.dob = dob;
+    }
+
+    public Person(Long id, String firstName, String lastName, ZonedDateTime dob, BigDecimal salary) {
+        this.id = id;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.dob = dob;
+        this.salary = salary;
     }
 
     public void setId(Long id) {
@@ -55,6 +64,14 @@ public class Person {
 
     public void setDob(ZonedDateTime dob) {
         this.dob = dob;
+    }
+
+    public BigDecimal getSalary() {
+        return salary;
+    }
+
+    public void setSalary(BigDecimal salary) {
+        this.salary = salary;
     }
 
     @Override

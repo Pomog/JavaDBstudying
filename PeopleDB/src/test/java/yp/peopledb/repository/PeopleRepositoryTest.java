@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import yp.peopledb.model.Person;
 
+import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -137,6 +138,26 @@ public class PeopleRepositoryTest {
                 map(String::valueOf).
                 collect(joining(","));
         System.out.println(ids);
+    }
 
+    @Test
+    @Disabled("This test is failing on GitHub")
+    public void canUpdate(){
+        Person savedPerson = new Person("UpdateTest1", "Smith",
+                ZonedDateTime.of(1980, 11, 15 ,
+                        15, 15, 0, 0,
+                        ZoneId.of("-6")));
+
+        repo.save(savedPerson);
+        System.out.println("savedPerson.getSalary() : " + savedPerson.getSalary());
+        Person p1 = repo.findById(savedPerson.getId()).get();
+        savedPerson.setSalary(new BigDecimal("73000.34"));
+        repo.update(savedPerson);
+        Person p2 = repo.findById(savedPerson.getId()).get();
+
+        System.out.println("p1.getSalary(): " + p1.getSalary());
+        System.out.println("p2.getSalary(): " + p2.getSalary());
+
+        assertThat(p2.getSalary()).isNotEqualByComparingTo(p1.getSalary());
     }
 }
