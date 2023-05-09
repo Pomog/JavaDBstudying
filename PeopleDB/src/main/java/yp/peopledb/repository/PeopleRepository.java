@@ -57,17 +57,23 @@ public class PeopleRepository {
             ps.setLong(1, id);
             ResultSet rs = ps.executeQuery();
             while (rs.next()){
-                long personID = rs.getLong("ID");
-                String firstName = rs.getString("FIRST_NAME");
-                String lastName = rs.getString("LAST_NAME");
-                ZonedDateTime dob = ZonedDateTime.of(rs.getTimestamp("DOB").toLocalDateTime(), ZoneId.of("+0"));
-                BigDecimal salary = rs.getBigDecimal("SALARY");
-                person = new Person(personID, firstName, lastName, dob, salary);
+                person = extractPersonFromResultSet(rs);
             }
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
         return Optional.ofNullable(person);
+    }
+
+    private Person extractPersonFromResultSet(ResultSet rs) throws SQLException {
+        Person person;
+        long personID = rs.getLong("ID");
+        String firstName = rs.getString("FIRST_NAME");
+        String lastName = rs.getString("LAST_NAME");
+        ZonedDateTime dob = ZonedDateTime.of(rs.getTimestamp("DOB").toLocalDateTime(), ZoneId.of("+0"));
+        BigDecimal salary = rs.getBigDecimal("SALARY");
+        person = new Person(personID, firstName, lastName, dob, salary);
+        return person;
     }
 
     public long count() {
