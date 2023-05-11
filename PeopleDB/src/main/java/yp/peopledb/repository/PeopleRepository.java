@@ -12,41 +12,28 @@ import java.util.Optional;
 
 import static java.util.stream.Collectors.joining;
 
-public class PeopleRepository {
+public class PeopleRepository extends CRUDRepository <Person>{
     public static final String SAVE_PERSON_SQL = "INSERT INTO PEOPLE (FIRST_NAME, LAST_NAME, DOB, SALARY) VALUES (?, ?, ?, ?)";
     public static final String FIND_BY_ID_SQL = "SELECT ID, FIRST_NAME, LAST_NAME, DOB, SALARY FROM PEOPLE WHERE ID=?";
     public static final String COUNT_SQL = "SELECT COUNT(*) FROM PEOPLE";
     public static final String DELETE_SQL = "DELETE FROM PEOPLE WHERE ID=?";
     public static final String UPDATE_SQL = "UPDATE PEOPLE SET FIRST_NAME=?, LAST_NAME=?, DOB=?, SALARY=? WHERE ID=?";
-    private Connection connection;
 
     public PeopleRepository(Connection connection) {
-        this.connection = connection;
+        super(connection);
     }
 
-    public Person save(Person person) throws UnableToSaveException{
+    @Override
+    String getSaveSql() {
+        return SAVE_PERSON_SQL;
+    }
 
-        try {
-            PreparedStatement ps = connection.prepareStatement(SAVE_PERSON_SQL, Statement.RETURN_GENERATED_KEYS);
-            System.out.println("PreparedStatement initial : " + ps);
-            ps.setString(1, person.getFirstName());
-            ps.setString(2, person.getLastName());
-            ps.setTimestamp(3, convertDobToTimeStamp(person.getDob()));
-            ps.setBigDecimal(4, person.getSalary());
-            int recordsAffected = ps.executeUpdate();
-            ResultSet rs = ps.getGeneratedKeys();
-            System.out.println("ResultSet : " + rs);
-            while (rs.next()) {
-                long id = rs.getLong(1);
-                person.setId(id);
-                System.out.println(person);
-            }
-            System.out.printf("recordsAffected: %d%n", recordsAffected);
-        } catch (SQLException e) {
-            e.printStackTrace();
-            throw new UnableToSaveException("tried to save person: " + person);
-        }
-        return person;
+    @Override
+    void mapForSave(Person entity, PreparedStatement ps) throws SQLException {
+        ps.setString(1, entity.getFirstName());
+        ps.setString(2, entity.getLastName());
+        ps.setTimestamp(3, convertDobToTimeStamp(entity.getDob()));
+        ps.setBigDecimal(4, entity.getSalary());
     }
 
     public Optional<Person> findById(Long id) {
@@ -136,5 +123,7 @@ public class PeopleRepository {
     private Timestamp convertDobToTimeStamp(ZonedDateTime dob) {
         return Timestamp.valueOf(dob.withZoneSameInstant(ZoneId.of("+0")).toLocalDateTime());
     }
+
+
 }
 
