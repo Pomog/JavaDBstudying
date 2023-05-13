@@ -1,5 +1,7 @@
 package yp.peopledb.repository;
 
+import yp.peopledb.annotation.SQL;
+import yp.peopledb.model.CrudOperation;
 import yp.peopledb.model.Person;
 
 import java.math.BigDecimal;
@@ -22,6 +24,7 @@ public class PeopleRepository extends CRUDRepository <Person>{
     }
 
     @Override
+    @SQL(value = SAVE_PERSON_SQL, operationType = CrudOperation.SAVE)
     void mapForSave(Person entity, PreparedStatement ps) throws SQLException {
         ps.setString(1, entity.getFirstName());
         ps.setString(2, entity.getLastName());
@@ -30,6 +33,7 @@ public class PeopleRepository extends CRUDRepository <Person>{
     }
 
     @Override
+    @SQL(value = UPDATE_SQL, operationType = CrudOperation.UPDATE)
     void mapForUpdate(Person entity, PreparedStatement ps) throws SQLException {
         ps.setString(1, entity.getFirstName());
         ps.setString(2, entity.getLastName());
@@ -38,6 +42,11 @@ public class PeopleRepository extends CRUDRepository <Person>{
     }
 
     @Override
+    @SQL(value = FIND_BY_ID_SQL, operationType = CrudOperation.FIND_BY_ID)
+    @SQL(value = FIND_All_SQL, operationType = CrudOperation.FIND_ALL)
+    @SQL(value = COUNT_SQL, operationType = CrudOperation.COUNT)
+    @SQL(value = DELETE_SQL,operationType = CrudOperation.DELETE_ONE)
+    @SQL(value = DELETE_MULTIPLE_SQL, operationType = CrudOperation.DELETE_MANY)
     Person extractEntityFromResultSet(ResultSet rs) throws SQLException{
         Person person;
         long personID = rs.getLong("ID");
@@ -47,41 +56,6 @@ public class PeopleRepository extends CRUDRepository <Person>{
         BigDecimal salary = rs.getBigDecimal("SALARY");
         person = new Person(personID, firstName, lastName, dob, salary);
         return person;
-    }
-
-    @Override
-    protected String getSaveSql() {
-        return SAVE_PERSON_SQL;
-    }
-
-    @Override
-    public String getFindByIdSql() {
-        return FIND_BY_ID_SQL;
-    }
-
-    @Override
-    protected String getFindAllSql() {
-        return FIND_All_SQL;
-    }
-
-    @Override
-    protected String getCountSql() {
-        return COUNT_SQL;
-    }
-
-    @Override
-    protected String getDeleteSql() {
-        return DELETE_SQL;
-    }
-
-    @Override
-    protected String getDeleteInSql() {
-        return DELETE_MULTIPLE_SQL;
-    }
-
-    @Override
-    protected String getUpdateSql() {
-        return UPDATE_SQL;
     }
 
     private Timestamp convertDobToTimeStamp(ZonedDateTime dob) {
