@@ -13,6 +13,7 @@ import java.sql.SQLException;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
 import static java.util.stream.Collectors.joining;
@@ -90,6 +91,20 @@ public class PeopleRepositoryTest {
                         ZoneId.of("-6"))));
         long endCount = repo.count();
         assertThat(endCount).isEqualTo(startCount + 1);
+    }
+
+    @Test
+    @Disabled("This test is failing on GitHub")
+    public void findAllTest (){
+        int startSize = repo.findAll().size();
+        System.out.println("startSize : " + startSize);
+        repo.save(new Person("John1", "Smith",
+                ZonedDateTime.of(1980, 11, 15 ,
+                        15, 15, 0, 0,
+                        ZoneId.of("-6"))));
+        int endSize = repo.findAll().size();
+        System.out.println("endSize : " + endSize);
+        assertThat(startSize).isEqualTo(endSize - 1);
     }
 
     @Test

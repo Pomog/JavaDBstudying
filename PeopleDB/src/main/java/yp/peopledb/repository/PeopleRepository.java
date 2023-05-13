@@ -1,31 +1,24 @@
 package yp.peopledb.repository;
 
 import yp.peopledb.model.Person;
-import yp.peopledb.repository.exeption.UnableToSaveException;
 
 import java.math.BigDecimal;
 import java.sql.*;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.Arrays;
-import java.util.Optional;
-
-import static java.util.stream.Collectors.joining;
 
 public class PeopleRepository extends CRUDRepository <Person>{
+
     public static final String SAVE_PERSON_SQL = "INSERT INTO PEOPLE (FIRST_NAME, LAST_NAME, DOB, SALARY) VALUES (?, ?, ?, ?)";
+    public static final String FIND_All_SQL = "SELECT ID, FIRST_NAME, LAST_NAME, DOB, SALARY FROM PEOPLE";
     public static final String FIND_BY_ID_SQL = "SELECT ID, FIRST_NAME, LAST_NAME, DOB, SALARY FROM PEOPLE WHERE ID=?";
     public static final String COUNT_SQL = "SELECT COUNT(*) FROM PEOPLE";
     public static final String DELETE_SQL = "DELETE FROM PEOPLE WHERE ID=?";
+    public static final String DELETE_MULTIPLE_SQL = "DELETE FROM PEOPLE WHERE ID IN (:ids)";
     public static final String UPDATE_SQL = "UPDATE PEOPLE SET FIRST_NAME=?, LAST_NAME=?, DOB=?, SALARY=? WHERE ID=?";
 
     public PeopleRepository(Connection connection) {
         super(connection);
-    }
-
-    @Override
-    String getSaveSql() {
-        return SAVE_PERSON_SQL;
     }
 
     @Override
@@ -36,23 +29,16 @@ public class PeopleRepository extends CRUDRepository <Person>{
         ps.setBigDecimal(4, entity.getSalary());
     }
 
-    public Optional<Person> findById(Long id) {
-        Person person = null;
-
-        try {
-            PreparedStatement ps = connection.prepareStatement(FIND_BY_ID_SQL);
-            ps.setLong(1, id);
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()){
-                person = extractPersonFromResultSet(rs);
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-        return Optional.ofNullable(person);
+    @Override
+    void mapForUpdate(Person entity, PreparedStatement ps) throws SQLException {
+        ps.setString(1, entity.getFirstName());
+        ps.setString(2, entity.getLastName());
+        ps.setTimestamp(3, convertDobToTimeStamp(entity.getDob()));
+        ps.setBigDecimal(4, entity.getSalary());
     }
 
-    private Person extractPersonFromResultSet(ResultSet rs) throws SQLException {
+    @Override
+    Person extractEntityFromResultSet(ResultSet rs) throws SQLException{
         Person person;
         long personID = rs.getLong("ID");
         String firstName = rs.getString("FIRST_NAME");
@@ -63,67 +49,43 @@ public class PeopleRepository extends CRUDRepository <Person>{
         return person;
     }
 
-    public long count() {
-        long count = 0;
-        try {
-            PreparedStatement ps = connection.prepareStatement(COUNT_SQL);
-            ResultSet rs = ps.executeQuery();
-            rs.next();
-            count = rs.getLong(1);
-            rs.close();
-            ps.close();
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-        return count;
+    @Override
+    protected String getSaveSql() {
+        return SAVE_PERSON_SQL;
     }
 
-    public void delete(Person person) {
-        try {
-            PreparedStatement ps = connection.prepareStatement(DELETE_SQL);
-            ps.setLong(1, person.getId());
-            int affectedRecordCount = ps.executeUpdate();
-            System.out.println("affectedRecordCount on delete: " + affectedRecordCount);
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+    @Override
+    public String getFindByIdSql() {
+        return FIND_BY_ID_SQL;
     }
 
-    public void delete(Person...people) {
-//        for (Person person : people){
-//            delete(person);
-//        }
-        try {
-            Statement stmt = connection.createStatement();
-            String ids = Arrays.stream(people).
-                    map(Person::getId).
-                    map(String::valueOf).
-                    collect(joining(","));
-            int affectedRecordsCount = stmt.executeUpdate("DELETE FROM PEOPLE WHERE ID IN (:ids)".replace(":ids", ids));
-            System.out.println("affectedRecordsCount on multy delete: " + affectedRecordsCount);
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+    @Override
+    protected String getFindAllSql() {
+        return FIND_All_SQL;
     }
 
-    public void update(Person person) {
-        try {
-            PreparedStatement ps = connection.prepareStatement(UPDATE_SQL);
-            ps.setString(1, person.getFirstName());
-            ps.setString(2, person.getLastName());
-            ps.setTimestamp(3, convertDobToTimeStamp(person.getDob()));
-            ps.setBigDecimal(4, person.getSalary());
-            ps.setLong(5, person.getId());
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+    @Override
+    protected String getCountSql() {
+        return COUNT_SQL;
+    }
+
+    @Override
+    protected String getDeleteSql() {
+        return DELETE_SQL;
+    }
+
+    @Override
+    protected String getDeleteInSql() {
+        return DELETE_MULTIPLE_SQL;
+    }
+
+    @Override
+    protected String getUpdateSql() {
+        return UPDATE_SQL;
     }
 
     private Timestamp convertDobToTimeStamp(ZonedDateTime dob) {
         return Timestamp.valueOf(dob.withZoneSameInstant(ZoneId.of("+0")).toLocalDateTime());
     }
-
-
 }
 
