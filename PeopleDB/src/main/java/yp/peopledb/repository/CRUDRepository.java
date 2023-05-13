@@ -1,9 +1,9 @@
 package yp.peopledb.repository;
 
+import yp.peopledb.annotation.Id;
 import yp.peopledb.annotation.MultiSQL;
 import yp.peopledb.annotation.SQL;
 import yp.peopledb.model.CrudOperation;
-import yp.peopledb.model.EntityDB;
 import yp.peopledb.repository.exeption.UnableToSaveException;
 
 import java.sql.*;
@@ -17,7 +17,7 @@ import java.util.stream.Stream;
 import static java.util.stream.Collectors.joining;
 
 
-abstract class CRUDRepository<T extends EntityDB> {
+abstract class CRUDRepository<T> {
 
     protected Connection connection;
 
@@ -50,7 +50,7 @@ abstract class CRUDRepository<T extends EntityDB> {
             System.out.println("ResultSet : " + rs);
             while (rs.next()) {
                 long id = rs.getLong(1);
-                entity.setId(id);
+                setIdByAnnotation(id, entity);
                 System.out.println(entity);
             }
             System.out.printf("recordsAffected: %d%n", recordsAffected);
@@ -65,7 +65,7 @@ abstract class CRUDRepository<T extends EntityDB> {
         try {
             PreparedStatement ps = connection.prepareStatement(getSqlByAnnotation(CrudOperation.UPDATE, this::getUpdateSql));
             mapForUpdate(entity, ps);
-            ps.setLong(5, entity.getId());
+            ps.setLong(5, getIdByAnnotation(entity));
             ps.executeUpdate();
         } catch (SQLException e) {
             throw new RuntimeException(e);
@@ -121,7 +121,7 @@ abstract class CRUDRepository<T extends EntityDB> {
     public void delete(T entity) {
         try {
             PreparedStatement ps = connection.prepareStatement(getSqlByAnnotation(CrudOperation.DELETE_ONE, this::getDeleteSql));
-            ps.setLong(1, entity.getId());
+            ps.setLong(1, getIdByAnnotation(entity));
             int affectedRecordCount = ps.executeUpdate();
             System.out.println("affectedRecordCount on delete: " + affectedRecordCount);
         } catch (SQLException e) {
@@ -129,11 +129,12 @@ abstract class CRUDRepository<T extends EntityDB> {
         }
     }
 
-    public void delete(T...entities) {
+    @SafeVarargs
+    public final void delete(T... entities) {
         try {
             Statement stmt = connection.createStatement();
             String ids = Arrays.stream(entities).
-                    map(T::getId).
+                    map(this::getIdByAnnotation).
                     map(String::valueOf).
                     collect(joining(","));
             int affectedRecordsCount = stmt.executeUpdate(getSqlByAnnotation(CrudOperation.DELETE_MANY, this::getDeleteInSql)
@@ -142,6 +143,35 @@ abstract class CRUDRepository<T extends EntityDB> {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+    }
+
+    private Long getIdByAnnotation(T entity){
+        return Arrays.stream(entity.getClass().getDeclaredFields())
+                .filter(field -> field.isAnnotationPresent(Id.class))
+                .map(field -> {
+                    field.setAccessible(true);
+                    Long id = null;
+                    try {
+                        id = (long)field.get(entity);
+                    } catch (IllegalAccessException e) {
+                        throw new RuntimeException(e);
+                    }
+                    return id;
+                })
+                .findFirst().orElseThrow(() -> new RuntimeException("No ID annotated field found"));
+    }
+
+    private void setIdByAnnotation (Long id,T entity) {
+         Arrays.stream(entity.getClass().getDeclaredFields())
+                .filter(field -> field.isAnnotationPresent(Id.class))
+                .forEach(field -> {
+                    field.setAccessible(true);
+                    try {
+                        field.set(entity, id);
+                    } catch (IllegalAccessException e) {
+                        throw new RuntimeException("Unable to set ID value");
+                    }
+                });
     }
 
     protected String getDeleteSql(){

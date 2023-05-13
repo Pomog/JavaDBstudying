@@ -1,13 +1,17 @@
 package yp.peopledb.model;
 
+import yp.peopledb.annotation.Id;
+
 import java.math.BigDecimal;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Objects;
 
-public class Person implements EntityDB {
+public class Person {
+    @Id
     private Long id;
+
     private String firstName;
     private String lastName;
     private ZonedDateTime dob;
@@ -34,12 +38,10 @@ public class Person implements EntityDB {
         this.salary = salary;
     }
 
-    @Override
     public void setId(Long id) {
         this.id = id;
     }
 
-    @Override
     public Long getId() {
         return id;
     }
