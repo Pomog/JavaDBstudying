@@ -199,6 +199,7 @@ public class PeopleRepositoryTest {
     }
 
     @Test
+    @Disabled("This test is failing on GitHub")
     public void loadData() throws IOException, SQLException {
         String filePath = "E:\\udemy\\Hr5m.csv";
         Files.lines(Path.of(filePath))
