@@ -6,12 +6,16 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import yp.peopledb.model.Person;
 
+import java.io.File;
+import java.io.IOException;
 import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
+import java.time.*;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Optional;
 
@@ -141,6 +145,25 @@ public class PeopleRepositoryTest {
 
     @Test
     public void experiment(){
+
+        System.out.println("\nSystem.getProperty(\"user.dir\"))");
+        System.out.println(System.getProperty("user.dir"));
+
+        File wd = new File(".");
+        System.out.println("working dir: " + wd.getAbsolutePath());
+
+        String filePath = "src/main/resources/1.txt";
+
+        File file = new File(filePath);
+        if (file.exists()) {
+            System.out.printf("The file %s exists!%n", filePath);
+        } else {
+            System.out.printf("The file %s does not exist.%n", filePath);
+        }
+
+        System.out.println("\nSystem.getProperty(\"user.dir\"))");
+        System.out.println(System.getProperty("user.dir"));
+
         Person p1 = new Person( 10L, null, null, null);
         Person p2 = new Person( 20L, null, null, null);
         Person p3 = new Person( 30L, null, null, null);
@@ -173,5 +196,26 @@ public class PeopleRepositoryTest {
         System.out.println("p2.getSalary(): " + p2.getSalary());
 
         assertThat(p2.getSalary()).isNotEqualByComparingTo(p1.getSalary());
+    }
+
+    @Test
+    public void loadData() throws IOException, SQLException {
+        String filePath = "E:\\udemy\\Hr5m.csv";
+        Files.lines(Path.of(filePath))
+                .skip(1)
+                //.limit(100)
+                .map(line -> line.split(","))
+                .map(a -> {
+                    LocalDate dob = LocalDate.parse(a[10], DateTimeFormatter.ofPattern("M/d/yyyy"));
+                    LocalTime tob = LocalTime.parse(a[11], DateTimeFormatter.ofPattern("hh:mm:ss a"));
+                    LocalDateTime dtob = LocalDateTime.of(dob, tob);
+                    ZonedDateTime zdtob = ZonedDateTime.of(dtob, ZoneId.of("+0"));
+                    Person person = new Person(a[2], a[4], zdtob);
+                    person.setSalary(new BigDecimal(a[25]));
+                    person.setEmail(a[6]);
+                    return person;
+                })
+                .forEach(repo::save);
+        connection.commit();
     }
 }

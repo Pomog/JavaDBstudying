@@ -47,13 +47,12 @@ abstract class CRUDRepository<T> {
             mapForSave(entity, ps);
             int recordsAffected = ps.executeUpdate();
             ResultSet rs = ps.getGeneratedKeys();
-            System.out.println("ResultSet : " + rs);
             while (rs.next()) {
                 long id = rs.getLong(1);
                 setIdByAnnotation(id, entity);
                 System.out.println(entity);
             }
-            System.out.printf("recordsAffected: %d%n", recordsAffected);
+           // System.out.printf("save method, recordsAffected: %d%n", recordsAffected);
         } catch (SQLException e) {
             e.printStackTrace();
             throw new UnableToSaveException("tried to save person: " + entity);
