@@ -1,6 +1,7 @@
 package yp.peopledb.repository;
 
 import yp.peopledb.annotation.SQL;
+import yp.peopledb.model.Address;
 import yp.peopledb.model.CrudOperation;
 import yp.peopledb.model.Person;
 
@@ -10,11 +11,12 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
 public class PeopleRepository extends CRUDRepository <Person>{
+    private AddressRepository addressRepository = null;
 
     public static final String SAVE_PERSON_SQL = """
             INSERT INTO PEOPLE
-            (FIRST_NAME, LAST_NAME, DOB, SALARY, EMAIL)
-            VALUES (?, ?, ?, ?, ?)
+            (FIRST_NAME, LAST_NAME, DOB, SALARY, EMAIL, HOME_ADDRESS)
+            VALUES (?, ?, ?, ?, ?, ?)
             """;
     public static final String FIND_All_SQL = "SELECT ID, FIRST_NAME, LAST_NAME, DOB, SALARY FROM PEOPLE";
     public static final String FIND_BY_ID_SQL = "SELECT ID, FIRST_NAME, LAST_NAME, DOB, SALARY FROM PEOPLE WHERE ID=?";
@@ -24,17 +26,22 @@ public class PeopleRepository extends CRUDRepository <Person>{
     public static final String UPDATE_SQL = "UPDATE PEOPLE SET FIRST_NAME=?, LAST_NAME=?, DOB=?, SALARY=? WHERE ID=?";
 
     public PeopleRepository(Connection connection) {
+
         super(connection);
+        addressRepository = new AddressRepository(connection);
     }
 
     @Override
     @SQL(value = SAVE_PERSON_SQL, operationType = CrudOperation.SAVE)
     void mapForSave(Person entity, PreparedStatement ps) throws SQLException {
+        Address savedAddress = addressRepository.save(entity.getHomeAddress());
+
         ps.setString(1, entity.getFirstName());
         ps.setString(2, entity.getLastName());
         ps.setTimestamp(3, convertDobToTimeStamp(entity.getDob()));
         ps.setBigDecimal(4, entity.getSalary());
         ps.setString(5, entity.getEmail());
+        ps.setLong(6, savedAddress.id());
     }
 
     @Override

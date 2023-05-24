@@ -17,6 +17,7 @@ public class Person {
     private ZonedDateTime dob;
     private BigDecimal salary = new BigDecimal("0");
     private String email;
+    private Address homeAddress;
 
     public Person(String firstName, String lastName, ZonedDateTime dob) {
         this.firstName = firstName;
@@ -116,5 +117,13 @@ public class Person {
     public int hashCode() {
         return Objects.hash(getId(), getFirstName(), getLastName(),
                 getDob().withZoneSameInstant(ZoneId.of("UTC")).truncatedTo(ChronoUnit.SECONDS));
+    }
+
+    public void setHomeAddress(Address homeAddress) {
+        this.homeAddress = homeAddress;
+    }
+
+    public yp.peopledb.model.Address getHomeAddress() {
+        return homeAddress;
     }
 }

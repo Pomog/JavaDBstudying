@@ -4,7 +4,9 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import yp.peopledb.model.Address;
 import yp.peopledb.model.Person;
+import yp.peopledb.model.Region;
 
 import java.io.File;
 import java.io.IOException;
@@ -68,6 +70,28 @@ public class PeopleRepositoryTest {
         Person savedPerson2 = repo.save(bobby);
         assertThat(savedPerson1.getId()).isNotEqualTo(savedPerson2.getId());
     }
+
+    @Test
+    @Disabled
+    public void canSavePersonWithAddress() throws SQLException {
+        Person john = new Person("John", "Smith",
+                ZonedDateTime.of(1980, 11, 15,
+                        15, 15, 0, 0,
+                        ZoneId.of("-6")));
+        Address address = new Address(null,
+                "1428 Elm Street",
+                "Apt. 1", "Springwood",
+                "Ohio", "45202",
+                "United States",
+                "Springwood County",
+                Region.SOUTH);
+        john.setHomeAddress(address);
+
+        Person savedPerson = repo.save(john);
+        assertThat(savedPerson.getHomeAddress().id()).isGreaterThan(0);
+        //connection.commit();
+    }
+
 
     @Test
     @Disabled("This test is failing on GitHub")
@@ -144,6 +168,7 @@ public class PeopleRepositoryTest {
     }
 
     @Test
+    @Disabled
     public void experiment(){
 
         System.out.println("\nSystem.getProperty(\"user.dir\"))");
@@ -197,9 +222,8 @@ public class PeopleRepositoryTest {
 
         assertThat(p2.getSalary()).isNotEqualByComparingTo(p1.getSalary());
     }
-
     @Test
-    @Disabled("This test is failing on GitHub")
+    @Disabled
     public void loadData() throws IOException, SQLException {
         String filePath = "E:\\udemy\\Hr5m.csv";
         Files.lines(Path.of(filePath))
