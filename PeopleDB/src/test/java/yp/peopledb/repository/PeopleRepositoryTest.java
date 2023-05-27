@@ -92,8 +92,7 @@ public class PeopleRepositoryTest {
         //connection.commit();
     }
 
-
-    @Test
+       @Test
     @Disabled("This test is failing on GitHub")
     public void canFindPersonById (){
         Person savedPerson = repo.save(new Person("test", "jackson", ZonedDateTime.now()));
@@ -107,6 +106,30 @@ public class PeopleRepositoryTest {
         Optional<Person> foundPerson = repo.findById(-1L);
         assertThat(foundPerson).isEmpty();
     }
+
+    @Test
+    @Disabled
+    public void canFindPersonByIdWithAddress() throws SQLException {
+        Person john = new Person("John", "Smith",
+                ZonedDateTime.of(1980, 11, 15,
+                        15, 15, 0, 0,
+                        ZoneId.of("-6")));
+        Address address = new Address(null,
+                "1428 Elm Street",
+                "Apt. 1", "Springwood",
+                "Ohio", "45202",
+                "United States",
+                "Springwood County",
+                Region.SOUTH);
+        john.setHomeAddress(address);
+
+        Person savedPerson = repo.save(john);
+        Person foundPerson = repo.findById(savedPerson.getId()).get();
+
+        assertThat(foundPerson.getHomeAddress().get().state()).isEqualTo("Ohio");
+        //connection.commit();
+    }
+
 
     @Test
     @Disabled("This test is failing on GitHub")

@@ -9,6 +9,7 @@ import java.math.BigDecimal;
 import java.sql.*;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.Optional;
 
 public class PeopleRepository extends CRUDRepository <Person>{
     private AddressRepository addressRepository = null;
@@ -19,7 +20,7 @@ public class PeopleRepository extends CRUDRepository <Person>{
             VALUES (?, ?, ?, ?, ?, ?)
             """;
     public static final String FIND_All_SQL = "SELECT ID, FIRST_NAME, LAST_NAME, DOB, SALARY FROM PEOPLE";
-    public static final String FIND_BY_ID_SQL = "SELECT ID, FIRST_NAME, LAST_NAME, DOB, SALARY FROM PEOPLE WHERE ID=?";
+    public static final String FIND_BY_ID_SQL = "SELECT ID, FIRST_NAME, LAST_NAME, DOB, SALARY, HOME_ADDRESS FROM PEOPLE WHERE ID=?";
     public static final String COUNT_SQL = "SELECT COUNT(*) FROM PEOPLE";
     public static final String DELETE_SQL = "DELETE FROM PEOPLE WHERE ID=?";
     public static final String DELETE_MULTIPLE_SQL = "DELETE FROM PEOPLE WHERE ID IN (:ids)";
@@ -66,13 +67,15 @@ public class PeopleRepository extends CRUDRepository <Person>{
     @SQL(value = DELETE_SQL,operationType = CrudOperation.DELETE_ONE)
     @SQL(value = DELETE_MULTIPLE_SQL, operationType = CrudOperation.DELETE_MANY)
     Person extractEntityFromResultSet(ResultSet rs) throws SQLException{
-        Person person;
         long personID = rs.getLong("ID");
         String firstName = rs.getString("FIRST_NAME");
         String lastName = rs.getString("LAST_NAME");
         ZonedDateTime dob = ZonedDateTime.of(rs.getTimestamp("DOB").toLocalDateTime(), ZoneId.of("+0"));
         BigDecimal salary = rs.getBigDecimal("SALARY");
-        person = new Person(personID, firstName, lastName, dob, salary);
+        long homeAddressID = rs.getLong("HOME_ADDRESS");
+        Optional<Address> homeAddress = addressRepository.findById(homeAddressID);
+        Person person = new Person(personID, firstName, lastName, dob, salary);
+        person.setHomeAddress(homeAddress.orElse(null));
         return person;
     }
 

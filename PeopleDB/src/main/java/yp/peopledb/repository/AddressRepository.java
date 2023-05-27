@@ -1,8 +1,10 @@
 package yp.peopledb.repository;
 
+import yp.peopledb.annotation.Id;
 import yp.peopledb.annotation.SQL;
 import yp.peopledb.model.Address;
 import yp.peopledb.model.CrudOperation;
+import yp.peopledb.model.Region;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -37,7 +39,23 @@ public class AddressRepository extends CRUDRepository<Address>{
     }
 
     @Override
+    @SQL(operationType = CrudOperation.FIND_BY_ID, value = """
+            SELECT
+            ID, STREET_ADRESS, ADRESS_2,CITY, STATE, POSTECODE, COUNTY, REGION, COUNTRY
+            FROM ADRESSES WHERE ID = ?
+            """)
     Address extractEntityFromResultSet(ResultSet rs) throws SQLException {
-        return null;
-    }
+        long id = rs.getLong("ID");
+        String streetAddress = rs.getString("STREET_ADRESS");
+        String address2 = rs.getString("ADRESS_2");
+        String city = rs.getString("CITY");
+        String state = rs.getString("STATE");
+        String postcode = rs.getString("POSTECODE");
+        String county = rs.getString("COUNTY");
+        String regionString = rs.getString("REGION");
+        Region region = Region.valueOf(regionString.toUpperCase());
+        String country = rs.getString("COUNTRY");
+
+        return new Address(id, streetAddress, address2, city, state ,postcode, country, country, region);
+      }
 }
