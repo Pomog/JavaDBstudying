@@ -50,7 +50,7 @@ abstract class CRUDRepository<T> {
             while (rs.next()) {
                 long id = rs.getLong(1);
                 setIdByAnnotation(id, entity);
-                System.out.println(entity);
+                //System.out.println(entity);
             }
            // System.out.printf("save method, recordsAffected: %d%n", recordsAffected);
         } catch (SQLException e) {

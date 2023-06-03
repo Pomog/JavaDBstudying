@@ -124,7 +124,10 @@ public class PeopleRepositoryTest {
         john.setHomeAddress(address);
 
         Person savedPerson = repo.save(john);
+        System.out.println("savedPerson : " + savedPerson);
+
         Person foundPerson = repo.findById(savedPerson.getId()).get();
+        System.out.println("foundPerson : " + foundPerson);
 
         assertThat(foundPerson.getHomeAddress().get().state()).isEqualTo("Ohio");
         //connection.commit();

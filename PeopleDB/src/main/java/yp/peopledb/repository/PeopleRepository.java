@@ -4,6 +4,7 @@ import yp.peopledb.annotation.SQL;
 import yp.peopledb.model.Address;
 import yp.peopledb.model.CrudOperation;
 import yp.peopledb.model.Person;
+import yp.peopledb.model.Region;
 
 import java.math.BigDecimal;
 import java.sql.*;
@@ -20,7 +21,13 @@ public class PeopleRepository extends CRUDRepository <Person>{
             VALUES (?, ?, ?, ?, ?, ?)
             """;
     public static final String FIND_All_SQL = "SELECT ID, FIRST_NAME, LAST_NAME, DOB, SALARY FROM PEOPLE";
-    public static final String FIND_BY_ID_SQL = "SELECT ID, FIRST_NAME, LAST_NAME, DOB, SALARY, HOME_ADDRESS FROM PEOPLE WHERE ID=?";
+    public static final String FIND_BY_ID_SQL = """
+            SELECT PERSON.ID, PERSON.FIRST_NAME, PERSON.LAST_NAME, PERSON.DOB, PERSON.SALARY, PERSON.HOME_ADDRESS,
+                   ADDRESS.ID, ADDRESS.STREET_ADRESS, ADDRESS.ADRESS_2,CITY, ADDRESS.STATE, ADDRESS.POSTECODE, ADDRESS.COUNTY, ADDRESS.REGION, ADDRESS.COUNTRY
+            FROM PEOPLE AS PERSON
+            LEFT OUTER JOIN ADRESSES AS ADDRESS
+            ON PERSON.HOME_ADDRESS = ADDRESS.ID
+            WHERE PERSON.ID=?""";
     public static final String COUNT_SQL = "SELECT COUNT(*) FROM PEOPLE";
     public static final String DELETE_SQL = "DELETE FROM PEOPLE WHERE ID=?";
     public static final String DELETE_MULTIPLE_SQL = "DELETE FROM PEOPLE WHERE ID IN (:ids)";
@@ -73,10 +80,29 @@ public class PeopleRepository extends CRUDRepository <Person>{
         ZonedDateTime dob = ZonedDateTime.of(rs.getTimestamp("DOB").toLocalDateTime(), ZoneId.of("+0"));
         BigDecimal salary = rs.getBigDecimal("SALARY");
         long homeAddressID = rs.getLong("HOME_ADDRESS");
-        Optional<Address> homeAddress = addressRepository.findById(homeAddressID);
+
         Person person = new Person(personID, firstName, lastName, dob, salary);
-        person.setHomeAddress(homeAddress.orElse(null));
+
+        if (homeAddressID != 0) {
+            Address address = extractedAddress(rs);
+            person.setHomeAddress(address);
+        }
         return person;
+    }
+
+    private static Address extractedAddress(ResultSet rs) throws SQLException {
+        long addressID = rs.getLong("ID");
+        String streetAddress = rs.getString("STREET_ADRESS");
+        String address2 = rs.getString("ADRESS_2");
+        String city = rs.getString("CITY");
+        String state = rs.getString("STATE");
+        String postcode = rs.getString("POSTECODE");
+        String county = rs.getString("COUNTY");
+        String regionString = rs.getString("REGION");
+        Region region = Region.valueOf(regionString.toUpperCase());
+        String country = rs.getString("COUNTRY");
+        Address address = new Address(addressID, streetAddress, address2, city, state, postcode, county, country, region);
+        return address;
     }
 
     private Timestamp convertDobToTimeStamp(ZonedDateTime dob) {
