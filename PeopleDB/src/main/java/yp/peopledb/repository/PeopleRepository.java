@@ -91,7 +91,8 @@ public class PeopleRepository extends CRUDRepository <Person>{
     }
 
     private static Address extractedAddress(ResultSet rs) throws SQLException {
-        long addressID = rs.getLong("ID");
+        long addressID = rs.getLong("ADDRESS.ID");
+        System.out.println("addressID : " + addressID);
         String streetAddress = rs.getString("STREET_ADRESS");
         String address2 = rs.getString("ADRESS_2");
         String city = rs.getString("CITY");
