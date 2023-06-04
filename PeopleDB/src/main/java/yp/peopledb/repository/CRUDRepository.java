@@ -50,6 +50,7 @@ abstract class CRUDRepository<T> {
             while (rs.next()) {
                 long id = rs.getLong(1);
                 setIdByAnnotation(id, entity);
+                postSave (entity, id);
                 //System.out.println(entity);
             }
            // System.out.printf("save method, recordsAffected: %d%n", recordsAffected);
@@ -184,6 +185,8 @@ abstract class CRUDRepository<T> {
     protected String getSaveSql(){
         throw new RuntimeException("SQL not defined.");
     };
+
+    protected void postSave(T entity, long id) { }
 
     protected String getUpdateSql(){
         throw new RuntimeException("SQL not defined.");

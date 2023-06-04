@@ -14,8 +14,8 @@ public class PeopleRepository extends CRUDRepository <Person>{
 
     public static final String SAVE_PERSON_SQL = """
             INSERT INTO PEOPLE
-            (FIRST_NAME, LAST_NAME, DOB, SALARY, EMAIL, HOME_ADDRESS, BUSINESS_ADDRESS)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            (FIRST_NAME, LAST_NAME, DOB, SALARY, EMAIL, HOME_ADDRESS, BUSINESS_ADDRESS, PARENT_ID)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """;
     public static final String FIND_All_SQL = "SELECT ID, FIRST_NAME, LAST_NAME, DOB, SALARY FROM PEOPLE";
     public static final String FIND_BY_ID_SQL = """
@@ -79,6 +79,24 @@ public class PeopleRepository extends CRUDRepository <Person>{
 
         associateAddressWithPerson(ps, entity.getHomeAddress(), 6);
         associateAddressWithPerson(ps, entity.getBusinessAddress(), 7);
+
+        associateChildWithPerson(entity, ps);
+
+    }
+
+    private static void associateChildWithPerson(Person entity, PreparedStatement ps) throws SQLException {
+        Optional<Person> parent = entity.getParent();
+        if (parent.isPresent()){
+            ps.setLong(8, parent.get().getId());
+        } else {
+            ps.setObject(8, null);
+        }
+    }
+
+    @Override
+    protected void postSave (Person entity, long id){
+        entity.getChildren().stream()
+                .forEach(this::save);
     }
 
     private void associateAddressWithPerson(PreparedStatement ps, Optional<Address> address, int parameterIndex) throws SQLException {

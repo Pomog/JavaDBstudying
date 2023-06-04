@@ -244,7 +244,6 @@ public class PeopleRepositoryTest {
     @Test
     @Disabled
     public void experiment(){
-
         System.out.println("\nSystem.getProperty(\"user.dir\"))");
         System.out.println(System.getProperty("user.dir"));
 
@@ -252,7 +251,6 @@ public class PeopleRepositoryTest {
         System.out.println("working dir: " + wd.getAbsolutePath());
 
         String filePath = "src/main/resources/1.txt";
-
         File file = new File(filePath);
         if (file.exists()) {
             System.out.printf("The file %s exists!%n", filePath);
@@ -316,5 +314,33 @@ public class PeopleRepositoryTest {
                 })
                 .forEach(repo::save);
       //  connection.commit();
+    }
+
+    @Test
+    public void canSavePersonWithChildren(){
+        Person johnAndChildren = new Person("John", "Smith",
+                ZonedDateTime.of(1980, 11, 15,
+                        15, 15, 0, 0,
+                        ZoneId.of("-6")));
+        Person johnny = new Person("Johnny", "Smith",
+                ZonedDateTime.of(2000, 1, 1,
+                        0, 0, 0, 0,
+                        ZoneId.of("-6")));
+        Person sarah = new Person("Sarah", "Smith",
+                ZonedDateTime.of(2002, 1, 1,
+                        0, 0, 0, 0,
+                        ZoneId.of("-6")));
+        Person jenny = new Person("Jenny", "Smith",
+                ZonedDateTime.of(2004, 1, 1,
+                        0, 0, 0, 0,
+                        ZoneId.of("-6")));
+        johnAndChildren.addChild(johnny);
+        johnAndChildren.addChild(sarah);
+        johnAndChildren.addChild(jenny);
+
+        Person savedPerson = repo.save(johnAndChildren);
+        savedPerson.getChildren().stream()
+                        .map(Person::getId)
+                                .forEach(id -> assertThat(id).isGreaterThan(0));
     }
 }
