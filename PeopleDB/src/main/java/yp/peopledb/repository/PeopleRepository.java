@@ -18,7 +18,7 @@ public class PeopleRepository extends CRUDRepository <Person>{
             (FIRST_NAME, LAST_NAME, DOB, SALARY, EMAIL, HOME_ADDRESS, BUSINESS_ADDRESS, PARENT_ID)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """;
-    public static final String FIND_All_SQL = "SELECT ID, FIRST_NAME, LAST_NAME, DOB, SALARY FROM PEOPLE";
+    public static final String FIND_All_SQL = "SELECT ID, FIRST_NAME, LAST_NAME, DOB, SALARY FROM PEOPLE FETCH FIRST 100 ROWS ONLY";
     public static final String FIND_BY_ID_SQL = """
             SELECT
             PARENT.ID AS PARENT_ID, PARENT.FIRST_NAME AS PARENT_FIRST_NAME, PARENT.LAST_NAME AS PARENT_LAST_NAME, PARENT.DOB AS PARENT_DOB, PARENT.SALARY AS PARENT_SALARY, PARENT.EMAIL AS PARENT_EMAIL,
@@ -121,24 +121,28 @@ public class PeopleRepository extends CRUDRepository <Person>{
 
         Person finalParent = null;
         do {
-            Person currentParent = extractPerson(rs, "PARENT_");
+            Person currentParent = extractPerson(rs, "PARENT_").get();
             if (finalParent == null){
                 finalParent = currentParent;
             } if (!finalParent.equals(currentParent)) {
 
             }
-            Person child = extractPerson(rs, "CHILD_");
-            finalParent.addChild(child);
+            Optional<Person> child = extractPerson(rs, "CHILD_");
+            child.ifPresent(finalParent::addChild);
         } while (rs.next());
         System.out.println(finalParent);
         return finalParent;
     }
 
-    private  Person extractPerson(ResultSet rs, String aliasPrefix) throws SQLException {
+    private  Optional<Person> extractPerson(ResultSet rs, String aliasPrefix) throws SQLException {
+        System.out.println("working with aliasPrefix = " + aliasPrefix);
+
         Long personID = getValueByAlias(aliasPrefix + "ID", rs, Long.class);
+        if (personID == null){ return  Optional.empty();}
+
         String firstName = getValueByAlias(aliasPrefix + "FIRST_NAME", rs, String.class);
         String lastName = getValueByAlias(aliasPrefix + "LAST_NAME", rs, String.class);
-        System.out.println(aliasPrefix);
+
 
         ZonedDateTime dob = ZonedDateTime.now();
         if (rs.getLong("CHILD_ID") != 0) {
@@ -147,15 +151,16 @@ public class PeopleRepository extends CRUDRepository <Person>{
 
         BigDecimal salary = getValueByAlias(aliasPrefix + "SALARY", rs, BigDecimal.class);
         Person person = new Person(personID, firstName, lastName, dob, salary);
-        Long homeAddressID = getValueByAlias("HOME_STREET_ADDRESS", rs, Long.class);
-        Long businessAddressID = getValueByAlias("BUSINESS_STREET_ADRESS", rs, Long.class);
+        Long homeAddressID = getValueByAlias("HOME_ID", rs, Long.class);
+        Long businessAddressID = getValueByAlias("BUSINESS_ID", rs, Long.class);
 
         System.out.println("TRY businessAddressID : " + businessAddressID);
         addAddressIfExist(rs, businessAddressID, person, AddressType.BUSINESS);
 
         System.out.println("TRY homeAddressID : " + homeAddressID);
         addAddressIfExist(rs, homeAddressID, person, AddressType.HOME);
-        return person;
+
+        return Optional.of(person);
     }
 
     private void addAddressIfExist(ResultSet rs, Long addressID, Person person, AddressType addressType) throws SQLException {

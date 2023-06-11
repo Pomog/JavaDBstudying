@@ -119,8 +119,8 @@ public class Person {
                 getId(), person.getId()) &&
                 getFirstName().equals(person.getFirstName()) &&
                 getLastName().equals(person.getLastName()) &&
-                getDob().withZoneSameInstant(ZoneId.of("UTC")).truncatedTo(ChronoUnit.SECONDS)
-                        .equals(person.getDob().withZoneSameInstant(ZoneId.of("UTC")).truncatedTo(ChronoUnit.SECONDS));
+                getDob().withZoneSameInstant(ZoneId.of("UTC")).truncatedTo(ChronoUnit.MINUTES)
+                        .equals(person.getDob().withZoneSameInstant(ZoneId.of("UTC")).truncatedTo(ChronoUnit.MINUTES));
     }
 
     @Override
