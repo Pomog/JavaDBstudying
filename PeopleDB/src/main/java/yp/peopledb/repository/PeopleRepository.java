@@ -7,6 +7,7 @@ import java.math.BigDecimal;
 import java.sql.*;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.Objects;
 import java.util.Optional;
 
 public class PeopleRepository extends CRUDRepository <Person>{
@@ -20,13 +21,8 @@ public class PeopleRepository extends CRUDRepository <Person>{
     public static final String FIND_All_SQL = "SELECT ID, FIRST_NAME, LAST_NAME, DOB, SALARY FROM PEOPLE";
     public static final String FIND_BY_ID_SQL = """
             SELECT
-                PERSON.ID,
-                PERSON.FIRST_NAME,
-                PERSON.LAST_NAME,
-                PERSON.DOB,
-                PERSON.SALARY,
-                PERSON.HOME_ADDRESS,
-                PERSON.BUSINESS_ADDRESS,
+            PARENT.ID AS PARENT_ID, PARENT.FIRST_NAME AS PARENT_FIRST_NAME, PARENT.LAST_NAME AS PARENT_LAST_NAME, PARENT.DOB AS PARENT_DOB, PARENT.SALARY AS PARENT_SALARY, PARENT.EMAIL AS PARENT_EMAIL,
+            CHILD.ID AS CHILD_ID, CHILD.FIRST_NAME AS CHILD_FIRST_NAME, CHILD.LAST_NAME AS CHILD_LAST_NAME, CHILD.DOB AS CHILD_DOB, CHILD.SALARY AS CHILD_SALARY, CHILD.EMAIL AS CHILD_EMAIL,
                 HOME.ID AS HOME_ID,
                 HOME.STREET_ADRESS AS HOME_STREET_ADDRESS,
                 HOME.CITY AS HOME_CITY,
@@ -44,17 +40,12 @@ public class PeopleRepository extends CRUDRepository <Person>{
                 BUSINESS.COUNTY AS BUSINESS_COUNTY,
                 BUSINESS.REGION AS BUSINESS_REGION,
                 BUSINESS.COUNTRY AS BUSINESS_COUNTRY
-            FROM
-                PEOPLE AS PERSON
-            LEFT OUTER JOIN
-                ADRESSES AS HOME
-            ON
-                PERSON.HOME_ADDRESS = HOME.ID
-            LEFT OUTER JOIN
-                ADRESSES AS BUSINESS
-            ON
-                PERSON.BUSINESS_ADDRESS = BUSINESS.ID
-            WHERE PERSON.ID=?""";
+            FROM PEOPLE AS PARENT
+            LEFT OUTER JOIN PEOPLE AS CHILD ON PARENT.ID = CHILD.PARENT_ID
+            LEFT OUTER JOIN ADRESSES AS HOME ON PARENT.HOME_ADDRESS = HOME.ID
+            LEFT OUTER JOIN ADRESSES AS BUSINESS ON PARENT.BUSINESS_ADDRESS = BUSINESS.ID
+            WHERE PARENT.ID = ?
+            """;
     public static final String COUNT_SQL = "SELECT COUNT(*) FROM PEOPLE";
     public static final String DELETE_SQL = "DELETE FROM PEOPLE WHERE ID=?";
     public static final String DELETE_MULTIPLE_SQL = "DELETE FROM PEOPLE WHERE ID IN (:ids)";
@@ -125,28 +116,52 @@ public class PeopleRepository extends CRUDRepository <Person>{
     @SQL(value = DELETE_SQL,operationType = CrudOperation.DELETE_ONE)
     @SQL(value = DELETE_MULTIPLE_SQL, operationType = CrudOperation.DELETE_MANY)
     Person extractEntityFromResultSet(ResultSet rs) throws SQLException{
-        long personID = rs.getLong("ID");
-        String firstName = rs.getString("FIRST_NAME");
-        String lastName = rs.getString("LAST_NAME");
-        ZonedDateTime dob = ZonedDateTime.of(rs.getTimestamp("DOB").toLocalDateTime(), ZoneId.of("+0"));
-        BigDecimal salary = rs.getBigDecimal("SALARY");
-        long homeAddressID = rs.getLong("HOME_ADDRESS");
-        long businessAddressID = rs.getLong("BUSINESS_ADDRESS");
+
+        printColumnNames(rs);
+
+        Person finalParent = null;
+        do {
+            Person currentParent = extractPerson(rs, "PARENT_");
+            if (finalParent == null){
+                finalParent = currentParent;
+            } if (!finalParent.equals(currentParent)) {
+
+            }
+            Person child = extractPerson(rs, "CHILD_");
+            finalParent.addChild(child);
+        } while (rs.next());
+        System.out.println(finalParent);
+        return finalParent;
+    }
+
+    private  Person extractPerson(ResultSet rs, String aliasPrefix) throws SQLException {
+        Long personID = getValueByAlias(aliasPrefix + "ID", rs, Long.class);
+        String firstName = getValueByAlias(aliasPrefix + "FIRST_NAME", rs, String.class);
+        String lastName = getValueByAlias(aliasPrefix + "LAST_NAME", rs, String.class);
+        System.out.println(aliasPrefix);
+
+        ZonedDateTime dob = ZonedDateTime.now();
+        if (rs.getLong("CHILD_ID") != 0) {
+            dob = ZonedDateTime.of(getValueByAlias(aliasPrefix + "DOB", rs, Timestamp.class).toLocalDateTime(), ZoneId.of("+0"));
+        }
+
+        BigDecimal salary = getValueByAlias(aliasPrefix + "SALARY", rs, BigDecimal.class);
         Person person = new Person(personID, firstName, lastName, dob, salary);
+        Long homeAddressID = getValueByAlias("HOME_STREET_ADDRESS", rs, Long.class);
+        Long businessAddressID = getValueByAlias("BUSINESS_STREET_ADRESS", rs, Long.class);
 
         System.out.println("TRY businessAddressID : " + businessAddressID);
         addAddressIfExist(rs, businessAddressID, person, AddressType.BUSINESS);
 
         System.out.println("TRY homeAddressID : " + homeAddressID);
         addAddressIfExist(rs, homeAddressID, person, AddressType.HOME);
-
         return person;
     }
 
-    private void addAddressIfExist(ResultSet rs, long addressID, Person person, AddressType addressType) throws SQLException {
+    private void addAddressIfExist(ResultSet rs, Long addressID, Person person, AddressType addressType) throws SQLException {
         System.out.println("call addAddressIfExist with flag : " + addressType);
         System.out.println("addressID for method: " + addressID);
-        if (addressID != 0) {
+        if (addressID != null) {
             System.out.println("EXTRACTION");
 
             switch (addressType) {
@@ -194,6 +209,16 @@ public class PeopleRepository extends CRUDRepository <Person>{
 
     private Timestamp convertDobToTimeStamp(ZonedDateTime dob) {
         return Timestamp.valueOf(dob.withZoneSameInstant(ZoneId.of("+0")).toLocalDateTime());
+    }
+
+    private static void printColumnNames (ResultSet rs) throws SQLException {
+        ResultSetMetaData metaData = rs.getMetaData();
+        int columnCount = metaData.getColumnCount();
+
+        for (int i = 1; i <= columnCount; i++) {
+            String columnName = metaData.getColumnName(i);
+            System.out.println("Column Name: " + columnName);
+        }
     }
 }
 

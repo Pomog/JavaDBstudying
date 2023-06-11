@@ -103,7 +103,8 @@ public class Person {
                 "id=" + id +
                 ", firstName='" + firstName + '\'' +
                 ", lastName='" + lastName + '\'' +
-                ", dob=" + dob +
+                ", dob=" + dob + '\'' + "\n" +
+                "child= " + "\n" + children + "\n" +
                 '}';
     }
 

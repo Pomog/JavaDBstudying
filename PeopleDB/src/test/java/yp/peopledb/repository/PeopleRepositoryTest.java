@@ -20,8 +20,10 @@ import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toSet;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class PeopleRepositoryTest {
@@ -181,6 +183,35 @@ public class PeopleRepositoryTest {
         //connection.commit();
     }
 
+    @Test
+    public void canFindPersonByIdWithChildren(){
+        Person johnAndChildren = new Person("John", "Smith",
+                ZonedDateTime.of(1980, 11, 15,
+                        15, 15, 0, 0,
+                        ZoneId.of("-6")));
+        Person johnny = new Person("Johnny", "Smith",
+                ZonedDateTime.of(2000, 1, 1,
+                        0, 0, 0, 0,
+                        ZoneId.of("-6")));
+        Person sarah = new Person("Sarah", "Smith",
+                ZonedDateTime.of(2002, 1, 1,
+                        0, 0, 0, 0,
+                        ZoneId.of("-6")));
+        Person jenny = new Person("Jenny", "Smith",
+                ZonedDateTime.of(2004, 1, 1,
+                        0, 0, 0, 0,
+                        ZoneId.of("-6")));
+        johnAndChildren.addChild(johnny);
+        johnAndChildren.addChild(sarah);
+        johnAndChildren.addChild(jenny);
+
+        Person savedPerson = repo.save(johnAndChildren);
+
+        Person foundPerson = repo.findById(savedPerson.getId()).get();
+        assertThat(foundPerson.getChildren().stream().map(Person::getFirstName).collect(toSet())).
+                contains("Johnny", "Sarah", "Jenny");
+    }
+
 
     @Test
     @Disabled("This test is failing on GitHub")
@@ -317,7 +348,7 @@ public class PeopleRepositoryTest {
     }
 
     @Test
-    public void canSavePersonWithChildren(){
+    public void canSavePersonWithChildren() throws SQLException {
         Person johnAndChildren = new Person("John", "Smith",
                 ZonedDateTime.of(1980, 11, 15,
                         15, 15, 0, 0,
@@ -342,5 +373,7 @@ public class PeopleRepositoryTest {
         savedPerson.getChildren().stream()
                         .map(Person::getId)
                                 .forEach(id -> assertThat(id).isGreaterThan(0));
+        //connection.commit();
     }
+
 }
