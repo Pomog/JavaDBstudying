@@ -7,7 +7,6 @@ import java.math.BigDecimal;
 import java.sql.*;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.Objects;
 import java.util.Optional;
 
 public class PeopleRepository extends CRUDRepository <Person>{
@@ -18,7 +17,17 @@ public class PeopleRepository extends CRUDRepository <Person>{
             (FIRST_NAME, LAST_NAME, DOB, SALARY, EMAIL, HOME_ADDRESS, BUSINESS_ADDRESS, PARENT_ID)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """;
-    public static final String FIND_All_SQL = "SELECT ID, FIRST_NAME, LAST_NAME, DOB, SALARY FROM PEOPLE FETCH FIRST 100 ROWS ONLY";
+    public static final String FIND_All_SQL = """
+    SELECT
+    PARENT.ID AS PARENT_ID,
+    PARENT.FIRST_NAME AS PARENT_FIRST_NAME,
+    PARENT.LAST_NAME AS PARENT_LAST_NAME,
+    PARENT.DOB AS PARENT_DOB,
+    PARENT.SALARY AS PARENT_SALARY,
+    PARENT.EMAIL AS PARENT_EMAIL
+    FROM PEOPLE AS PARENT
+    
+    """;
     public static final String FIND_BY_ID_SQL = """
             SELECT
             PARENT.ID AS PARENT_ID, PARENT.FIRST_NAME AS PARENT_FIRST_NAME, PARENT.LAST_NAME AS PARENT_LAST_NAME, PARENT.DOB AS PARENT_DOB, PARENT.SALARY AS PARENT_SALARY, PARENT.EMAIL AS PARENT_EMAIL,
@@ -117,7 +126,7 @@ public class PeopleRepository extends CRUDRepository <Person>{
     @SQL(value = DELETE_MULTIPLE_SQL, operationType = CrudOperation.DELETE_MANY)
     Person extractEntityFromResultSet(ResultSet rs) throws SQLException{
 
-        printColumnNames(rs);
+//        printColumnNames(rs);
 
         Person finalParent = null;
         do {
@@ -125,17 +134,18 @@ public class PeopleRepository extends CRUDRepository <Person>{
             if (finalParent == null){
                 finalParent = currentParent;
             } if (!finalParent.equals(currentParent)) {
-
+                rs.previous();
+                break;
             }
             Optional<Person> child = extractPerson(rs, "CHILD_");
             child.ifPresent(finalParent::addChild);
         } while (rs.next());
-        System.out.println(finalParent);
+//        System.out.println(finalParent);
         return finalParent;
     }
 
     private  Optional<Person> extractPerson(ResultSet rs, String aliasPrefix) throws SQLException {
-        System.out.println("working with aliasPrefix = " + aliasPrefix);
+//        System.out.println("working with aliasPrefix = " + aliasPrefix);
 
         Long personID = getValueByAlias(aliasPrefix + "ID", rs, Long.class);
         if (personID == null){ return  Optional.empty();}
@@ -144,28 +154,27 @@ public class PeopleRepository extends CRUDRepository <Person>{
         String lastName = getValueByAlias(aliasPrefix + "LAST_NAME", rs, String.class);
 
 
-        ZonedDateTime dob = ZonedDateTime.now();
-        if (rs.getLong("CHILD_ID") != 0) {
-            dob = ZonedDateTime.of(getValueByAlias(aliasPrefix + "DOB", rs, Timestamp.class).toLocalDateTime(), ZoneId.of("+0"));
-        }
+
+        ZonedDateTime dob = ZonedDateTime.of(getValueByAlias(aliasPrefix + "DOB", rs, Timestamp.class).toLocalDateTime(), ZoneId.of("+0"));
+
 
         BigDecimal salary = getValueByAlias(aliasPrefix + "SALARY", rs, BigDecimal.class);
         Person person = new Person(personID, firstName, lastName, dob, salary);
         Long homeAddressID = getValueByAlias("HOME_ID", rs, Long.class);
         Long businessAddressID = getValueByAlias("BUSINESS_ID", rs, Long.class);
 
-        System.out.println("TRY businessAddressID : " + businessAddressID);
+//        System.out.println("TRY businessAddressID : " + businessAddressID);
         addAddressIfExist(rs, businessAddressID, person, AddressType.BUSINESS);
 
-        System.out.println("TRY homeAddressID : " + homeAddressID);
+//        System.out.println("TRY homeAddressID : " + homeAddressID);
         addAddressIfExist(rs, homeAddressID, person, AddressType.HOME);
 
         return Optional.of(person);
     }
 
     private void addAddressIfExist(ResultSet rs, Long addressID, Person person, AddressType addressType) throws SQLException {
-        System.out.println("call addAddressIfExist with flag : " + addressType);
-        System.out.println("addressID for method: " + addressID);
+//        System.out.println("call addAddressIfExist with flag : " + addressType);
+//        System.out.println("addressID for method: " + addressID);
         if (addressID != null) {
             System.out.println("EXTRACTION");
 
@@ -208,7 +217,7 @@ public class PeopleRepository extends CRUDRepository <Person>{
         String country = getValueByAlias(aliasPrefix + "COUNTRY", rs, String.class);
 
         var address = new Address(addressID, streetAddress, address2, city, state, postcode, county, country, region);
-        System.out.println("extractedAddress returned : " + address);
+//        System.out.println("extractedAddress returned : " + address);
         return address;
     }
 

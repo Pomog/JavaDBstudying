@@ -230,7 +230,10 @@ public class PeopleRepositoryTest {
     @Disabled("This test is failing on GitHub")
     public void findAllTest (){
         int startSize = repo.findAll().size();
+        System.out.println("");
         System.out.println("startSize : " + startSize);
+        System.out.println("");
+        System.out.println("Testing Person Saved");
         repo.save(new Person("John1", "Smith",
                 ZonedDateTime.of(1980, 11, 15 ,
                         15, 15, 0, 0,

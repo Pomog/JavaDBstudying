@@ -112,8 +112,8 @@ public class Person {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof Person person)) return false;
-        System.out.println("object: " + getDob().withZoneSameInstant(ZoneId.of("UTC")));
-        System.out.println("person: " + person.getDob().withZoneSameInstant(ZoneId.of("UTC")));
+//        System.out.println("object: " + getDob().withZoneSameInstant(ZoneId.of("UTC")));
+//        System.out.println("person: " + person.getDob().withZoneSameInstant(ZoneId.of("UTC")));
 
         return Objects.equals(
                 getId(), person.getId()) &&
