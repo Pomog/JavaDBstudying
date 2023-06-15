@@ -18,16 +18,18 @@ public class PeopleRepository extends CRUDRepository <Person>{
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """;
     public static final String FIND_All_SQL = """
-    SELECT
-    PARENT.ID AS PARENT_ID,
-    PARENT.FIRST_NAME AS PARENT_FIRST_NAME,
-    PARENT.LAST_NAME AS PARENT_LAST_NAME,
-    PARENT.DOB AS PARENT_DOB,
-    PARENT.SALARY AS PARENT_SALARY,
-    PARENT.EMAIL AS PARENT_EMAIL
-    FROM PEOPLE AS PARENT
-    
-    """;
+            SELECT
+            PARENT.ID AS PARENT_ID,
+            PARENT.FIRST_NAME AS PARENT_FIRST_NAME,
+            PARENT.LAST_NAME AS PARENT_LAST_NAME,
+            PARENT.DOB AS PARENT_DOB,
+            PARENT.SALARY AS PARENT_SALARY,
+            PARENT.EMAIL AS PARENT_EMAIL
+            FROM PEOPLE AS PARENT
+                    ORDER BY
+                        PARENT.ID DESC
+            FETCH FIRST 3 ROWS ONLY
+            """;
     public static final String FIND_BY_ID_SQL = """
             SELECT
             PARENT.ID AS PARENT_ID, PARENT.FIRST_NAME AS PARENT_FIRST_NAME, PARENT.LAST_NAME AS PARENT_LAST_NAME, PARENT.DOB AS PARENT_DOB, PARENT.SALARY AS PARENT_SALARY, PARENT.EMAIL AS PARENT_EMAIL,
@@ -140,7 +142,7 @@ public class PeopleRepository extends CRUDRepository <Person>{
             Optional<Person> child = extractPerson(rs, "CHILD_");
             child.ifPresent(finalParent::addChild);
         } while (rs.next());
-//        System.out.println(finalParent);
+       System.out.println(finalParent);
         return finalParent;
     }
 
