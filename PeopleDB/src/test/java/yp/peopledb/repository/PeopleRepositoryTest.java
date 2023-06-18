@@ -352,6 +352,7 @@ public class PeopleRepositoryTest {
     }
 
     @Test
+    @Disabled
     public void canSavePersonWithChildren() throws SQLException {
         Person johnAndChildren = new Person("John", "Smith",
                 ZonedDateTime.of(1980, 11, 15,

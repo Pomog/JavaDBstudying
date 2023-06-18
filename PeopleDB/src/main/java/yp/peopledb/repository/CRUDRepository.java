@@ -46,12 +46,14 @@ abstract class CRUDRepository<T> {
             PreparedStatement ps = connection.prepareStatement(getSqlByAnnotation(CrudOperation.SAVE, this::getSaveSql), Statement.RETURN_GENERATED_KEYS);
             mapForSave(entity, ps);
             int recordsAffected = ps.executeUpdate();
+            System.out.println("recordsAffected = " + recordsAffected);
             ResultSet rs = ps.getGeneratedKeys();
+
             while (rs.next()) {
                 long id = rs.getLong(1);
                 setIdByAnnotation(id, entity);
                 postSave (entity, id);
-                //System.out.println(entity);
+                System.out.println("saved entity : \\n" +  entity);
             }
            // System.out.printf("save method, recordsAffected: %d%n", recordsAffected);
         } catch (SQLException e) {

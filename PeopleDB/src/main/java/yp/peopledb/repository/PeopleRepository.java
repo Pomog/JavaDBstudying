@@ -26,9 +26,6 @@ public class PeopleRepository extends CRUDRepository <Person>{
             PARENT.SALARY AS PARENT_SALARY,
             PARENT.EMAIL AS PARENT_EMAIL
             FROM PEOPLE AS PARENT
-                    ORDER BY
-                        PARENT.ID DESC
-            FETCH FIRST 3 ROWS ONLY
             """;
     public static final String FIND_BY_ID_SQL = """
             SELECT
@@ -55,7 +52,6 @@ public class PeopleRepository extends CRUDRepository <Person>{
             LEFT OUTER JOIN PEOPLE AS CHILD ON PARENT.ID = CHILD.PARENT_ID
             LEFT OUTER JOIN ADRESSES AS HOME ON PARENT.HOME_ADDRESS = HOME.ID
             LEFT OUTER JOIN ADRESSES AS BUSINESS ON PARENT.BUSINESS_ADDRESS = BUSINESS.ID
-            WHERE PARENT.ID = ?
             """;
     public static final String COUNT_SQL = "SELECT COUNT(*) FROM PEOPLE";
     public static final String DELETE_SQL = "DELETE FROM PEOPLE WHERE ID=?";
@@ -142,7 +138,7 @@ public class PeopleRepository extends CRUDRepository <Person>{
             Optional<Person> child = extractPerson(rs, "CHILD_");
             child.ifPresent(finalParent::addChild);
         } while (rs.next());
-       System.out.println(finalParent);
+//       System.out.println(finalParent);
         return finalParent;
     }
 
