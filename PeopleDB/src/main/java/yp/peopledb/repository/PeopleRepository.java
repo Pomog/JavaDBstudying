@@ -7,6 +7,8 @@ import java.math.BigDecimal;
 import java.sql.*;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 public class PeopleRepository extends CRUDRepository <Person>{
@@ -57,6 +59,8 @@ public class PeopleRepository extends CRUDRepository <Person>{
     public static final String DELETE_SQL = "DELETE FROM PEOPLE WHERE ID=?";
     public static final String DELETE_MULTIPLE_SQL = "DELETE FROM PEOPLE WHERE ID IN (:ids)";
     public static final String UPDATE_SQL = "UPDATE PEOPLE SET FIRST_NAME=?, LAST_NAME=?, DOB=?, SALARY=? WHERE ID=?";
+
+    private Map<String, Integer> aliasColIdxMap = new HashMap<>();
 
     public PeopleRepository(Connection connection) {
 
@@ -151,10 +155,7 @@ public class PeopleRepository extends CRUDRepository <Person>{
         String firstName = getValueByAlias(aliasPrefix + "FIRST_NAME", rs, String.class);
         String lastName = getValueByAlias(aliasPrefix + "LAST_NAME", rs, String.class);
 
-
-
         ZonedDateTime dob = ZonedDateTime.of(getValueByAlias(aliasPrefix + "DOB", rs, Timestamp.class).toLocalDateTime(), ZoneId.of("+0"));
-
 
         BigDecimal salary = getValueByAlias(aliasPrefix + "SALARY", rs, BigDecimal.class);
         Person person = new Person(personID, firstName, lastName, dob, salary);
@@ -192,14 +193,25 @@ public class PeopleRepository extends CRUDRepository <Person>{
     }
     private <T> T getValueByAlias (String alias, ResultSet rs, Class<T> clazz) throws SQLException{
         int columnCount = rs.getMetaData().getColumnCount();
-        for (int colIdx = 1; colIdx <= columnCount; colIdx++){
-            String columnLabel = rs.getMetaData().getColumnLabel(colIdx);
-            if (alias.equals(columnLabel)){
-                return rs.getObject(colIdx,clazz);
+        int foundColIdx = getIndexForAlias(alias, rs, columnCount);
+        return foundColIdx == 0 ? null : rs.getObject(foundColIdx,clazz);
+    }
+
+    private int getIndexForAlias(String alias, ResultSet rs, int columnCount) throws SQLException {
+        Integer foundColIdx = aliasColIdxMap.getOrDefault(alias, 0);
+        if (foundColIdx == 0) {
+            for (int colIdx = 1; colIdx <= columnCount; colIdx++){
+                String columnLabel = rs.getMetaData().getColumnLabel(colIdx);
+                if (alias.equals(columnLabel)){
+                    foundColIdx = colIdx;
+                    aliasColIdxMap.put(alias, foundColIdx);
+                    break;
+                }
             }
         }
-        return null;
+        return foundColIdx;
     }
+
     private Address extractedAddress(ResultSet rs, String aliasPrefix) throws SQLException {
         long addressID = rs.getLong("ID");
         if (addressID == 0) return null;
