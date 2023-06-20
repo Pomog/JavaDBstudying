@@ -4,6 +4,7 @@ import yp.peopledb.annotation.Id;
 import yp.peopledb.annotation.MultiSQL;
 import yp.peopledb.annotation.SQL;
 import yp.peopledb.model.CrudOperation;
+import yp.peopledb.repository.exeption.DataException;
 import yp.peopledb.repository.exeption.UnableToSaveException;
 
 import java.sql.*;
@@ -20,34 +21,26 @@ import static java.util.stream.Collectors.joining;
 abstract class CRUDRepository<T> {
 
     protected Connection connection;
+    private PreparedStatement savePS;
+    private PreparedStatement findByIdPS;
 
     public CRUDRepository(Connection connection) {
-        this.connection = connection;
-    }
-
-    private String getSqlByAnnotation(CrudOperation operationType, Supplier<String> sqlGetter){
-        Stream<SQL> multiSqlStream = Arrays.stream(this.getClass().getDeclaredMethods())
-                .filter(method -> method.isAnnotationPresent(MultiSQL.class))
-                .map(method -> method.getAnnotation(MultiSQL.class))
-                .flatMap(msql -> Arrays.stream(msql.value()));
-
-        Stream<SQL> sqlStream = Arrays.stream(this.getClass().getDeclaredMethods())
-                .filter(method -> method.isAnnotationPresent(SQL.class))
-                .map(method -> method.getAnnotation(SQL.class));
-
-        return Stream.concat(multiSqlStream, sqlStream)
-                .filter(annotation -> annotation.operationType().equals(operationType))
-                .map(SQL::value)
-                .findFirst().orElseGet(sqlGetter);
-    }
-
-    public T save(T entity) throws UnableToSaveException {
         try {
-            PreparedStatement ps = connection.prepareStatement(getSqlByAnnotation(CrudOperation.SAVE, this::getSaveSql), Statement.RETURN_GENERATED_KEYS);
-            mapForSave(entity, ps);
-            int recordsAffected = ps.executeUpdate();
+            this.connection = connection;
+            savePS = connection.prepareStatement(getSqlByAnnotation(CrudOperation.SAVE, this::getSaveSql), Statement.RETURN_GENERATED_KEYS);
+            findByIdPS = connection.prepareStatement(getSqlByAnnotation(CrudOperation.FIND_BY_ID, this::getFindByIdSql));
+        } catch (SQLException e) {
+            e.printStackTrace();
+            throw new DataException("Unable to create prepared statements for CRUDRepository", e);
+        }
+    }
+
+    public T save(T entity) {
+        try {
+            mapForSave(entity, savePS);
+            int recordsAffected = savePS.executeUpdate();
             System.out.println("recordsAffected = " + recordsAffected);
-            ResultSet rs = ps.getGeneratedKeys();
+            ResultSet rs = savePS.getGeneratedKeys();
 
             while (rs.next()) {
                 long id = rs.getLong(1);
@@ -76,11 +69,9 @@ abstract class CRUDRepository<T> {
 
     public Optional<T> findById(Long id) {
         T entity = null;
-
         try {
-            PreparedStatement ps = connection.prepareStatement(getSqlByAnnotation(CrudOperation.FIND_BY_ID, this::getFindByIdSql));
-            ps.setLong(1, id);
-            ResultSet rs = ps.executeQuery();
+            findByIdPS.setLong(1, id);
+            ResultSet rs = findByIdPS.executeQuery();
             while (rs.next()){
                 entity = extractEntityFromResultSet(rs);
             }
@@ -201,6 +192,21 @@ abstract class CRUDRepository<T> {
         throw new RuntimeException("SQL not defined.");
     };
 
+    private String getSqlByAnnotation(CrudOperation operationType, Supplier<String> sqlGetter){
+        Stream<SQL> multiSqlStream = Arrays.stream(this.getClass().getDeclaredMethods())
+                .filter(method -> method.isAnnotationPresent(MultiSQL.class))
+                .map(method -> method.getAnnotation(MultiSQL.class))
+                .flatMap(msql -> Arrays.stream(msql.value()));
+
+        Stream<SQL> sqlStream = Arrays.stream(this.getClass().getDeclaredMethods())
+                .filter(method -> method.isAnnotationPresent(SQL.class))
+                .map(method -> method.getAnnotation(SQL.class));
+
+        return Stream.concat(multiSqlStream, sqlStream)
+                .filter(annotation -> annotation.operationType().equals(operationType))
+                .map(SQL::value)
+                .findFirst().orElseGet(sqlGetter);
+    }
 
     /**
      * @return Returns a String that represent the SQL needed to
