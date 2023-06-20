@@ -54,6 +54,7 @@ public class PeopleRepository extends CRUDRepository <Person>{
             LEFT OUTER JOIN PEOPLE AS CHILD ON PARENT.ID = CHILD.PARENT_ID
             LEFT OUTER JOIN ADRESSES AS HOME ON PARENT.HOME_ADDRESS = HOME.ID
             LEFT OUTER JOIN ADRESSES AS BUSINESS ON PARENT.BUSINESS_ADDRESS = BUSINESS.ID
+            WHERE PARENT.ID = ?
             """;
     public static final String COUNT_SQL = "SELECT COUNT(*) FROM PEOPLE";
     public static final String DELETE_SQL = "DELETE FROM PEOPLE WHERE ID=?";

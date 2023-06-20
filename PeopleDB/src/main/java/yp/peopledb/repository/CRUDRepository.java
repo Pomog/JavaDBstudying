@@ -41,7 +41,7 @@ abstract class CRUDRepository<T> {
             int recordsAffected = savePS.executeUpdate();
             System.out.println("recordsAffected = " + recordsAffected);
             ResultSet rs = savePS.getGeneratedKeys();
-
+            System.out.println("savePS.getGeneratedKeys() = " + rs);
             while (rs.next()) {
                 long id = rs.getLong(1);
                 setIdByAnnotation(id, entity);
